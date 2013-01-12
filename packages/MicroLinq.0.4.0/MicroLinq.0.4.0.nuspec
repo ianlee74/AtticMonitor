@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
+  <metadata>
+    <id>MicroLinq</id>
+    <version>0.4.0</version>
+    <title>MicroLinq: LINQ for .NET Micro Framework</title>
+    <authors>Erik Noren</authors>
+    <owners>Erik Noren</owners>
+    <licenseUrl>http://microlinq.codeplex.com/license</licenseUrl>
+    <projectUrl>http://microlinq.codeplex.com/</projectUrl>
+    <iconUrl>https://nugetgallery.blob.core.windows.net/icons/MicroLinq.0.4.0.PNG</iconUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>MicroLinq is an implementation of the basic LINQ extensions written specifically for embedded systems based on the .NET Micro Framework. The implementation focuses on efficient algorithms and a small footprint to be usable on as wide a selection of devices as possible.</description>
+    <summary>A small implementation of LINQ on the .NET Micro Framework.</summary>
+    <tags>netmf linq micro embedded</tags>
+    <references>
+      <reference file="VikingErik.NetMF.MicroLinq.dll" />
+      <reference file="VikingErik.NetMF.MicroLinq.PrebuiltDelegates.dll" />
+    </references>
+  </metadata>
+</package>
