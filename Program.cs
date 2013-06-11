@@ -173,10 +173,14 @@ namespace IanLee.AtticMonitor
             display.Clear();
             if(line1 != null) _displayLine[0] = line1;
             if (line2 != null) _displayLine[1] = line2;
+
+            // THIS WORKS
             display.PrintString((_displayLine[0] ?? ""));
             display.SetCursor(1, 0);
             display.PrintString(_displayLine[1] ?? "");
-            //display.PrintString(_displayLine[0] + "\n" + _displayLine[1]);
+
+            // THIS CORRUPTS THE FIRMWARE (I'm using the ethernet firmware)
+            //display.PrintString(_displayLine[0] + "\r" + _displayLine[1]);
         }
 
         private void InitializeNetwork_Dhcp()
