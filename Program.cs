@@ -96,7 +96,7 @@ namespace IanLee.AtticMonitor
             Debug.Print("Initializing network...");
 #endif
             UpdateDisplay("Init network...");
-            InitializeNetwork_Dhcp();
+            InitializeNetwork_Static();
             multicolorLed1.TurnGreen();
 #if DEBUG
             Debug.Print("Beginning TeamSpeak initialization...");
