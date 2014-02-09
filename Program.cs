@@ -25,7 +25,7 @@ namespace IanLee.AtticMonitor
         private ThingSpeakClient _thingSpeakClient;
         private readonly DataEntry _thingSpeakDataEntry = new DataEntry();
         private static NetworkInterface _ni = null;
-        private static readonly byte[] _macAddress = new byte[] { 0x00, 0x75, 0x65, 0xde, 0xac, 0xaa };
+        private static readonly byte[] _macAddress = new byte[] { 0x66, 0x57, 0xBA, 0xBF, 0xA3, 0x6C };
         private static string _ipAddress = "0.0.0.0";
         private DigitalInput _trap1Status = null;
         private DigitalInput _trap2Status = null;
@@ -36,6 +36,9 @@ namespace IanLee.AtticMonitor
 
         void ProgramStarted()
         {
+#if DEBUG
+            Debug.Print("Program Started");
+#endif
             Microsoft.SPOT.Net.NetworkInformation.NetworkChange.NetworkAvailabilityChanged += (sender, args) =>
                 {
 #if DEBUG
@@ -44,8 +47,8 @@ namespace IanLee.AtticMonitor
                     if (args.IsAvailable && !_connectEthernetThread.IsAlive)
                     {
                         // Initialize the network & ThingSpeak client.
-                        _connectEthernetThread = new Thread(Initialize);
-                        _connectEthernetThread.Start();
+                        //_connectEthernetThread = new Thread(Initialize);
+                        //_connectEthernetThread.Start();
                     }
                     else
                     {
@@ -55,9 +58,11 @@ namespace IanLee.AtticMonitor
                     }
                 };
 
-#if DEBUG
-            Debug.Print("Program Started");
-#endif
+            Microsoft.SPOT.Net.NetworkInformation.NetworkChange.NetworkAddressChanged += (sender, args) =>
+            {
+                Debug.Print("Network address changed!  " + _ni.IPAddress.ToString());
+            }; 
+
             UpdateDisplay("Good morning!");
 
             _trap1Status = extender.SetupDigitalInput(GT.Socket.Pin.Nine, GlitchFilterMode.Off, ResistorMode.PullUp);
@@ -77,7 +82,7 @@ namespace IanLee.AtticMonitor
                     UpdateDisplay(null, "T1: " + (t1Status ? "1" : "0") + "   T2: " + (t2Status ? "1" : "0"));
                     if (_isArmed && (t1Status || t2Status))     // Pin will be pulled high when the trap is released.
                     {
-                        MouseCaught(_trap1Status.Read() ? 1 : 2);
+                        MouseCaught(_trap1Status.Read() ? 2 : 1);
                     }
                 };
 
@@ -97,6 +102,7 @@ namespace IanLee.AtticMonitor
 #endif
             UpdateDisplay("Init network...");
             InitializeNetwork_Static();
+            //InitializeNetwork_Dhcp();
             multicolorLed1.TurnGreen();
 #if DEBUG
             Debug.Print("Beginning TeamSpeak initialization...");
@@ -118,7 +124,7 @@ namespace IanLee.AtticMonitor
         private void ArmTrap()
         {
             // Make sure traps are ready.
-            if (_trap1Status.Read() || _trap2Status.Read())
+            if (!_trap1Status.Read()) // || !_trap2Status.Read())
             {
                 UpdateDisplay("Can't arm.", "Traps not ready.");
 
@@ -195,19 +201,22 @@ namespace IanLee.AtticMonitor
                 }
                 _ni = nis[0];
                 _ni.PhysicalAddress = _macAddress;
-                _ni.EnableDhcp();                
+                _ni.EnableDhcp();          
 
                 // There's a bug in the current SDK.  If connection becomes available after startup then IPAddress does not seem to get populated.
-                while (_ipAddress == "0.0.0.0")
+                while (_ni.IPAddress == "0.0.0.0")
                 {
-                    _ipAddress = _ni.IPAddress == "0.0.0.0" ? IPAddress.GetDefaultLocalAddress().ToString() : _ni.IPAddress;
 #if DEBUG
-                    Debug.Print("Waiting for IP address..." + IPAddress.GetDefaultLocalAddress());
+                    Debug.Print("Waiting for IP address...");
 #endif
                     Thread.Sleep(1000);
                 }
 #if DEBUG
-                Debug.Print("IP Address:" + _ipAddress);
+                Debug.Print("Network ready.");
+                Debug.Print("  IP Address: " + _ni.IPAddress);
+                Debug.Print("  Subnet Mask: " + _ni.SubnetMask);
+                Debug.Print("  Default Getway: " + _ni.GatewayAddress);
+                Debug.Print("  MAC Address: " + _ni.PhysicalAddress.ToString());
 #endif
                 UpdateDisplay("IP: " + _ipAddress);
             }
@@ -225,22 +234,21 @@ namespace IanLee.AtticMonitor
             string dnsAddresses = "192.168.1.1";
 
             Debug.Print("Initializing network...");
-            NetworkInterface[] interfaces = NetworkInterface.GetAllNetworkInterfaces();
+            var interfaces = NetworkInterface.GetAllNetworkInterfaces();
             if (interfaces != null && interfaces.Length > 0)
             {
-                NetworkInterface networkInterface = interfaces[0];
-                Boolean isDhcpWorked = false;
+                _ni = interfaces[0];
 
                 Debug.Print("Setting static IP...");
-                networkInterface.EnableStaticIP(myIP, subnetMask, gatewayAddress);
-                networkInterface.PhysicalAddress = _macAddress;
-                networkInterface.EnableStaticDns(new[] { dnsAddresses });
+                _ni.EnableStaticIP(myIP, subnetMask, gatewayAddress);
+                _ni.PhysicalAddress = _macAddress;
+                _ni.EnableStaticDns(new[] { dnsAddresses });
 
                 Debug.Print("Network ready.");
-                Debug.Print(" IP Address: " + networkInterface.IPAddress);
-                Debug.Print(" Subnet Mask: " + networkInterface.SubnetMask);
-                Debug.Print(" Default Gateway: " + networkInterface.GatewayAddress);
-                Debug.Print(" DNS Server: " + networkInterface.DnsAddresses[0]);
+                Debug.Print(" IP Address: " + _ni.IPAddress);
+                Debug.Print(" Subnet Mask: " + _ni.SubnetMask);
+                Debug.Print(" Default Gateway: " + _ni.GatewayAddress);
+                Debug.Print(" DNS Server: " + _ni.DnsAddresses[0]);
             }
             else
             {
